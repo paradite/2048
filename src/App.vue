@@ -1,19 +1,25 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div>2048 Game</div>
+    <GameBoard v-bind:game="game" />
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import GameBoard from "./components/GameBoard.vue";
+import { Game } from "./game";
+
+const game = new Game();
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    HelloWorld
+    GameBoard
+  },
+  data: () => {
+    return { game };
   }
-}
+};
 </script>
 
 <style>
