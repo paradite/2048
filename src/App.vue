@@ -14,11 +14,16 @@ const game = new Game();
 export default {
   name: "App",
   components: {
-    GameBoard
+    GameBoard,
+  },
+  mounted() {
+    window.onkeyup = (e) => {
+      game.handleEvent(e.code);
+    };
   },
   data: () => {
-    return { game };
-  }
+    return { game, rows: game.rows };
+  },
 };
 </script>
 

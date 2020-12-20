@@ -1,3 +1,10 @@
+const keys = {
+  ArrowLeft: "ArrowLeft",
+  ArrowRight: "ArrowRight",
+  ArrowUp: "ArrowUp",
+  ArrowDown: "ArrowDown",
+};
+
 export class Game {
   constructor() {
     this.rows = new Array(4);
@@ -29,5 +36,34 @@ export class Game {
   };
   getRandomNumber = () => {
     return Math.random() < 0.9 ? 2 : 4;
+  };
+  handleEvent = (event) => {
+    switch (event) {
+      case keys.ArrowUp:
+        console.log(this.rows);
+        for (let i = 0; i < this.rows.length; i++) {
+          const row = this.rows[i];
+          for (let i = 0; i < row.length; i++) {
+            const element = row[i];
+            if (element) {
+              row[i] = undefined;
+              this.rows[0][i] = element;
+            }
+          }
+        }
+        break;
+
+      case keys.ArrowDown:
+        break;
+
+      case keys.ArrowLeft:
+        break;
+
+      case keys.ArrowRight:
+        break;
+
+      default:
+        break;
+    }
   };
 }
