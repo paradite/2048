@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import { paintMatrix } from './util';
 
-const keys = {
+export const keys = {
   ArrowLeft: 'ArrowLeft',
   ArrowRight: 'ArrowRight',
   ArrowUp: 'ArrowUp',
