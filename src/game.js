@@ -51,7 +51,7 @@ export class Game {
     switch (key) {
       case keys.ArrowUp:
         if (row === 0) return [row, col];
-        for (let i = row - 1; i > 0; i--) {
+        for (let i = row - 1; i >= 0; i--) {
           if (updated[`${i}-${col}`]) {
             if (this.rows[i][col]) {
               return [i + 1, col];
@@ -69,7 +69,7 @@ export class Game {
             continue;
           }
         }
-        return [0, col];
+        return [row, col];
 
       case keys.ArrowDown:
         if (row === this.rows.length - 1) return [row, col];
@@ -91,7 +91,7 @@ export class Game {
             continue;
           }
         }
-        return [this.rows.length - 1, col];
+        return [row, col];
 
       case keys.ArrowLeft:
         if (col === 0) return [row, col];
@@ -113,7 +113,7 @@ export class Game {
             continue;
           }
         }
-        return [row, 0];
+        return [row, col];
 
       case keys.ArrowRight:
         if (col === this.rows[0].length - 1) return [row, col];
@@ -135,7 +135,7 @@ export class Game {
             continue;
           }
         }
-        return [row, this.rows[0].length - 1];
+        return [row, col];
 
       default:
         break;
@@ -164,6 +164,11 @@ export class Game {
             moved = true;
             row[j] = undefined;
             if (this.rows[r][c]) {
+              if (element !== this.rows[r][c]) {
+                console.error(
+                  `element ${element} from ${i},${j} moved to ${r},${c} with ${this.rows[r][c]}`
+                );
+              }
               this.rows[r][c] = element + this.rows[r][c];
             } else {
               this.rows[r][c] = element;
@@ -176,18 +181,17 @@ export class Game {
     if (moved) {
       // some numbers moved, we need to update board
       // TODO: remove this hack
-      this.rows = cloneDeep(this.rows);
-      paintMatrix(this.rows);
-      console.log('handleEvent -> updated', updated);
+      // paintMatrix(this.rows);
       // check again
       this.handleEvent(event, updated);
     } else {
       // we are done moving
       this.squeeze(event);
-      paintMatrix(this.rows);
+      // paintMatrix(this.rows);
       // add new numbers
       this.addRandomNumbers();
       paintMatrix(this.rows);
+      this.rows = cloneDeep(this.rows);
     }
   };
   squeeze = event => {
@@ -227,7 +231,7 @@ export class Game {
     switch (key) {
       case keys.ArrowUp:
         if (row === 0) return [row, col];
-        for (let i = row - 1; i > 0; i--) {
+        for (let i = row - 1; i >= 0; i--) {
           if (this.rows[i][col]) {
             return [i + 1, col];
           } else {
