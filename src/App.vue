@@ -98,6 +98,11 @@ export default {
   font-weight: normal;
   font-style: normal;
 }
+
+body {
+  overscroll-behavior-y: none;
+}
+
 #app {
   font-family: ClearSans, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
