@@ -4,7 +4,7 @@
     v-bind:style="{
       width: totalSize + 'px',
       height: totalSize + 'px',
-      padding: marginSize + 'px',
+      padding: marginSize + 'px'
     }"
   >
     <Row
@@ -21,38 +21,30 @@
 </template>
 
 <script>
-import { Game } from "../game";
-import Row from "./Row.vue";
+import { Game } from '../game';
+import Row from './Row.vue';
 export default {
-  name: "GameBoard",
+  name: 'GameBoard',
   components: {
-    Row,
+    Row
   },
   data() {
     const cellSize = 70;
     const marginSize = 10;
     return {
       cellSize,
-      marginSize,
+      marginSize
     };
   },
   computed: {
     totalSize() {
       return this.cellSize * 4 + this.marginSize * 3;
-    },
+    }
   },
   props: {
     game: Game,
-    rows: Array,
-  },
-  watch: {
-    rows: {
-      handler: function (val, oldVal) {
-        console.log("val, oldVal", val, oldVal);
-      },
-      deep: true,
-    },
-  },
+    rows: Array
+  }
 };
 </script>
 

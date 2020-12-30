@@ -4,7 +4,7 @@
     v-bind:style="{
       width: totalSize + 'px',
       height: cellSize + 'px',
-      marginBottom: last ? 0 : marginSize + 'px',
+      marginBottom: last ? 0 : marginSize + 'px'
     }"
   >
     <div
@@ -14,7 +14,7 @@
       v-bind:style="{
         width: cellSize + 'px',
         height: cellSize + 'px',
-        marginRight: i === row.length - 1 ? 0 : marginSize + 'px',
+        marginRight: i === row.length - 1 ? 0 : marginSize + 'px'
       }"
     >
       {{ cell }}
@@ -24,22 +24,14 @@
 
 <script>
 export default {
-  name: "Row",
+  name: 'Row',
   props: {
     row: Array,
     cellSize: Number,
     marginSize: Number,
     totalSize: Number,
-    last: Boolean,
-  },
-  watch: {
-    row: {
-      handler: function (val, oldVal) {
-        console.log("val, oldVal", val, oldVal);
-      },
-      deep: true,
-    },
-  },
+    last: Boolean
+  }
 };
 </script>
 
