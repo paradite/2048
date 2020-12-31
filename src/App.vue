@@ -146,7 +146,7 @@ a {
 .buttons {
   display: flex;
   text-align: center;
-  width: 330px;
+  width: 370px;
   margin: 10px auto;
   justify-content: space-around;
 }
@@ -186,7 +186,7 @@ a {
 }
 
 .scores {
-  width: 330px;
+  width: 370px;
   text-align: center;
   margin: 0 auto;
 }

@@ -29,7 +29,7 @@ export default {
     Row
   },
   data() {
-    const cellSize = 70;
+    const cellSize = 80;
     const marginSize = 10;
     return {
       cellSize,

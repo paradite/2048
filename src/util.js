@@ -2,8 +2,8 @@ export const isObjEmpty = obj => {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 };
 
-export const paintMatrix = rows => {
-  return;
+export const paintMatrix = (rows, print) => {
+  if (!print) return;
   console.log('----');
   for (let i = 0; i < rows.length; i++) {
     let result = '';
