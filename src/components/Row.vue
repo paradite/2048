@@ -79,6 +79,10 @@ export default {
   background: #edd073;
 }
 
+.cell-256 {
+  background: #edcc62;
+}
+
 .cell-512 {
   background: #edc950;
 }

@@ -16,8 +16,8 @@ const ALL_MOVES = [
 ];
 
 // const WIN_NUMBER = 2048;
-const WIN_NUMBER = 128;
-const AUTO_INTERVAL = 50;
+const WIN_NUMBER = 512;
+const AUTO_INTERVAL = 20;
 
 export class Game {
   constructor() {
@@ -34,7 +34,7 @@ export class Game {
     for (let i = 0; i < this.rows.length; i++) {
       this.rows[i] = new Array(4);
     }
-    this.addRandomNumbers();
+    this.addRandomNumbers(2);
   };
   restart = () => {
     this.moveCount = 0;
@@ -52,6 +52,8 @@ export class Game {
     this.runForEachCell((i, j, cell) => {
       if (cell === this.winNumber) {
         this.scores.push(this.moveCount);
+        // prettier-ignore
+        console.log('score, final filled count', this.moveCount, this.getFilledCount(this.rows));
         this.restart();
       }
     });
@@ -78,8 +80,8 @@ export class Game {
       }
     }
   };
-  addRandomNumbers = () => {
-    for (let i = 0; i < 2; i++) {
+  addRandomNumbers = count => {
+    for (let i = 0; i < count; i++) {
       let row = this.getRandomPosition();
       let col = this.getRandomPosition();
       let tries = 3;
@@ -108,20 +110,20 @@ export class Game {
   getRandomNumber = () => {
     return 2;
   };
-  getMoveDestination = (row, col, number, key, updated) => {
+  getMoveDestination = (rows, row, col, number, key, updated) => {
     switch (key) {
       case keys.ArrowUp:
         if (row === 0) return [row, col];
         for (let i = row - 1; i >= 0; i--) {
           if (updated[`${i}-${col}`]) {
-            if (this.rows[i][col]) {
+            if (rows[i][col]) {
               return [i + 1, col];
             } else {
               continue;
             }
           }
-          if (this.rows[i][col]) {
-            if (this.rows[i][col] !== number) {
+          if (rows[i][col]) {
+            if (rows[i][col] !== number) {
               return [i + 1, col];
             } else {
               return [i, col];
@@ -133,17 +135,17 @@ export class Game {
         return [row, col];
 
       case keys.ArrowDown:
-        if (row === this.rows.length - 1) return [row, col];
-        for (let i = row + 1; i <= this.rows.length - 1; i++) {
+        if (row === rows.length - 1) return [row, col];
+        for (let i = row + 1; i <= rows.length - 1; i++) {
           if (updated[`${i}-${col}`]) {
-            if (this.rows[i][col]) {
+            if (rows[i][col]) {
               return [i - 1, col];
             } else {
               continue;
             }
           }
-          if (this.rows[i][col]) {
-            if (this.rows[i][col] !== number) {
+          if (rows[i][col]) {
+            if (rows[i][col] !== number) {
               return [i - 1, col];
             } else {
               return [i, col];
@@ -158,14 +160,14 @@ export class Game {
         if (col === 0) return [row, col];
         for (let i = col - 1; i >= 0; i--) {
           if (updated[`${row}-${i}`]) {
-            if (this.rows[row][i]) {
+            if (rows[row][i]) {
               return [row, i + 1];
             } else {
               continue;
             }
           }
-          if (this.rows[row][i]) {
-            if (this.rows[row][i] !== number) {
+          if (rows[row][i]) {
+            if (rows[row][i] !== number) {
               return [row, i + 1];
             } else {
               return [row, i];
@@ -177,17 +179,17 @@ export class Game {
         return [row, col];
 
       case keys.ArrowRight:
-        if (col === this.rows[0].length - 1) return [row, col];
-        for (let i = col + 1; i <= this.rows[0].length - 1; i++) {
+        if (col === rows[0].length - 1) return [row, col];
+        for (let i = col + 1; i <= rows[0].length - 1; i++) {
           if (updated[`${row}-${i}`]) {
-            if (this.rows[row][i]) {
+            if (rows[row][i]) {
               return [row, i - 1];
             } else {
               continue;
             }
           }
-          if (this.rows[row][i]) {
-            if (this.rows[row][i] !== number) {
+          if (rows[row][i]) {
+            if (rows[row][i] !== number) {
               return [row, i - 1];
             } else {
               return [row, i];
@@ -202,8 +204,8 @@ export class Game {
         break;
     }
   };
-  getNewRows = (key, updated = {}) => {
-    const newRows = cloneDeep(this.rows);
+  getNewRows = (rows, key, updated = {}) => {
+    let newRows = cloneDeep(rows);
     for (let i = 0; i < newRows.length; i++) {
       const row = newRows[i];
       for (let j = 0; j < row.length; j++) {
@@ -211,6 +213,7 @@ export class Game {
         const element = row[j];
         if (element) {
           const destination = this.getMoveDestination(
+            newRows,
             i,
             j,
             element,
@@ -243,7 +246,7 @@ export class Game {
     if (!this.isValidKey(key)) return;
     if (first) this.moveCount++;
 
-    const newRows = this.getNewRows(key, updated);
+    const newRows = this.getNewRows(this.rows, key, updated);
     this.rows = newRows;
     // we are done moving
     this.squeeze(key);
@@ -252,7 +255,7 @@ export class Game {
     this.checkWin();
     this.checkLose();
     // add new numbers
-    this.addRandomNumbers();
+    this.addRandomNumbers(1);
     paintMatrix(this.rows);
     this.rows = cloneDeep(this.rows);
   };
@@ -353,7 +356,8 @@ export class Game {
   };
   autoSolve = () => {
     // const move = this.getAutoMoveRandom();
-    const move = this.getAutoMoveMinFilled();
+    // const move = this.getAutoMoveMinFilled();
+    const move = this.getAutoMoveMinFilledTwoSteps();
     this.handleEvent(move);
   };
   getFilledCount = rows => {
@@ -365,26 +369,78 @@ export class Game {
     }, rows);
     return count;
   };
+  getMax = rows => {
+    let max = 0;
+    this.runForEachCell((i, j, cell) => {
+      if (cell && cell > max) {
+        max = cell;
+      }
+    }, rows);
+    return max;
+  };
   getAutoMoveMinFilled = () => {
-    let min = this.rows.length * this.rows[0].length;
+    let minFilled = this.rows.length * this.rows[0].length;
+    let maxCell = 0;
     let selected = this.getAutoMoveRandom();
     let candidates = [];
     for (let i = 0; i < ALL_MOVES.length; i++) {
       const move = ALL_MOVES[i];
-      const newRows = this.getNewRows(move);
+      const newRows = this.getNewRows(this.rows, move);
       const filledCount = this.getFilledCount(newRows);
-      console.log('getAutoMoveMinFilled -> filledCount', filledCount);
-      if (filledCount < min) {
-        min = filledCount;
+      const max = this.getMax(newRows);
+      // console.log('getAutoMoveMinFilled -> filledCount max', filledCount, max);
+      if (filledCount < minFilled) {
+        minFilled = filledCount;
+        maxCell = max;
         candidates = [move];
-      } else if (filledCount === min) {
+      } else if (filledCount === minFilled && max > maxCell) {
+        maxCell = max;
+        candidates = [move];
+      } else if (filledCount === minFilled && max === maxCell) {
         candidates.push(move);
       }
     }
-    console.log('getAutoMoveMinFilled -> candidates count', candidates, min);
+    // prettier-ignore
+    // console.log('getAutoMoveMinFilled -> candidates minFilled maxCell', candidates, minFilled, maxCell);
     const random = Math.floor(Math.random() * candidates.length);
-    selected = candidates[random];
-    console.log('getAutoMoveMinFilled -> selected', selected);
+    selected = candidates[random] ? candidates[random] : selected;
+    // console.log('getAutoMoveMinFilled -> selected', selected);
+    return selected;
+  };
+
+  getAutoMoveMinFilledTwoSteps = () => {
+    // console.log('----', this.getFilledCount(this.rows));
+    let minFilled = this.rows.length * this.rows[0].length;
+    let maxCell = 0;
+    let selected = this.getAutoMoveRandom();
+    let candidates = [];
+    for (let i = 0; i < ALL_MOVES.length; i++) {
+      const move = ALL_MOVES[i];
+      for (let j = 0; j < ALL_MOVES.length; j++) {
+        const move2 = ALL_MOVES[j];
+        let newRows = this.getNewRows(this.rows, move);
+        newRows = this.getNewRows(newRows, move2);
+        const filledCount = this.getFilledCount(newRows);
+        const max = this.getMax(newRows);
+        // prettier-ignore
+        // console.log('getAutoMoveMinFilled -> move move 2 filledCount max', move, move2, filledCount, max);
+        if (filledCount < minFilled) {
+          minFilled = filledCount;
+          maxCell = max;
+          candidates = [move];
+        } else if (filledCount === minFilled && max > maxCell) {
+          maxCell = max;
+          candidates = [move];
+        } else if (filledCount === minFilled && max === maxCell) {
+          candidates.push(move);
+        }
+      }
+    }
+    // prettier-ignore
+    // console.log('getAutoMoveMinFilled -> candidates minFilled maxCell', candidates, minFilled, maxCell);
+    const random = Math.floor(Math.random() * candidates.length);
+    selected = candidates[random] ? candidates[random] : selected;
+    // console.log('getAutoMoveMinFilled -> selected', selected);
     return selected;
   };
   getAutoMoveRandom = () => {
