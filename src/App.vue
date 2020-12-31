@@ -1,7 +1,9 @@
 <template>
   <div id="app">
     <div class="header">
-      2048 Game by <a href="https://github.com/paradite/vue2048">@paradite</a>
+      2048 game with an auto solver<br />
+      by
+      <a href="https://github.com/paradite/vue2048">@paradite</a>
     </div>
     <GameBoard v-bind:game="game" />
     <div class="buttons">
