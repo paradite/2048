@@ -18,8 +18,10 @@
     <div class="info">Move count: {{ game.moveCount }}</div>
     <div class="scores">
       Scores<span v-if="game.scores.length === 0"> (empty)</span>
-      <div v-for="(score, i) in game.scores" :key="i">
-        {{ score }}
+      <br />
+      <div v-for="(score, i) in game.scores" :key="i" class="score">
+        {{ score
+        }}<span v-if="i < game.scores.length - 1" class="score-divider">,</span>
       </div>
     </div>
   </div>
@@ -181,5 +183,19 @@ a {
   to {
     color: #f75f3b;
   }
+}
+
+.scores {
+  width: 330px;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.score {
+  display: inline-block;
+}
+
+.score-divider {
+  margin-right: 2px;
 }
 </style>
