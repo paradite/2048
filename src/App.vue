@@ -164,11 +164,15 @@ a {
   background: #8f7a66;
   color: #f9f6f2;
   border-radius: 4px;
+  font-weight: bold;
 }
 
 .button.active {
-  font-weight: bold;
   animation: 2s linear 0s infinite alternate auto-run;
+}
+
+.button.active:hover {
+  background: #8f7a66;
 }
 
 .button:hover {
