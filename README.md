@@ -2,6 +2,12 @@
 
 Live at [https://paradite.github.io/vue2048/](https://paradite.github.io/vue2048/)
 
+## TODO
+
+- Movement animations
+- More idiomatic use of vue.js
+- Better AI solver
+
 ## Project setup
 
 ```

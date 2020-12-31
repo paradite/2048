@@ -8,7 +8,16 @@ export const keys = {
   ArrowDown: 'ArrowDown'
 };
 
-const WIN_NUMBER = 2048;
+const ALL_MOVES = [
+  keys.ArrowLeft,
+  keys.ArrowRight,
+  keys.ArrowUp,
+  keys.ArrowDown
+];
+
+// const WIN_NUMBER = 2048;
+const WIN_NUMBER = 128;
+const AUTO_INTERVAL = 50;
 
 export class Game {
   constructor() {
@@ -16,6 +25,9 @@ export class Game {
     this.moved = {};
     this.moveCount = 0;
     this.scores = [];
+    this.isAuto = false;
+    this.autoInterval = null;
+    this.winNumber = WIN_NUMBER;
   }
   resetRows = () => {
     this.rows = new Array(4);
@@ -38,7 +50,7 @@ export class Game {
   };
   checkWin = () => {
     this.runForEachCell((i, j, cell) => {
-      if (cell === WIN_NUMBER) {
+      if (cell === this.winNumber) {
         this.scores.push(this.moveCount);
         this.restart();
       }
@@ -57,9 +69,9 @@ export class Game {
       this.restart();
     }
   };
-  runForEachCell = fn => {
-    for (let i = 0; i < this.rows.length; i++) {
-      const row = this.rows[i];
+  runForEachCell = (fn, rows = this.rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       for (let j = 0; j < row.length; j++) {
         const cell = row[j];
         fn(i, j, cell);
@@ -190,12 +202,10 @@ export class Game {
         break;
     }
   };
-  handleEvent = (key, updated = {}, first = true) => {
-    if (!this.isValidKey(key)) return;
-    if (first) this.moveCount++;
-    let moved = false;
-    for (let i = 0; i < this.rows.length; i++) {
-      const row = this.rows[i];
+  getNewRows = (key, updated = {}) => {
+    const newRows = cloneDeep(this.rows);
+    for (let i = 0; i < newRows.length; i++) {
+      const row = newRows[i];
       for (let j = 0; j < row.length; j++) {
         if (updated[`${i}-${j}`]) continue;
         const element = row[j];
@@ -212,41 +222,39 @@ export class Game {
             if (r === i && c === j) continue;
             updated[`${r}-${c}`] = true;
             // we need to move
-            moved = true;
             row[j] = undefined;
-            if (this.rows[r][c]) {
-              if (element !== this.rows[r][c]) {
+            if (newRows[r][c]) {
+              if (element !== newRows[r][c]) {
                 console.error(
-                  `element ${element} from ${i},${j} moved to ${r},${c} with ${this.rows[r][c]}`
+                  `element ${element} from ${i},${j} moved to ${r},${c} with ${newRows[r][c]}`
                 );
               }
-              this.rows[r][c] = element + this.rows[r][c];
+              newRows[r][c] = element + newRows[r][c];
             } else {
-              this.rows[r][c] = element;
+              newRows[r][c] = element;
             }
           }
         }
       }
     }
+    return newRows;
+  };
+  handleEvent = (key, updated = {}, first = true) => {
+    if (!this.isValidKey(key)) return;
+    if (first) this.moveCount++;
 
-    if (moved) {
-      // some numbers moved, we need to update board
-      // TODO: remove this hack
-      // paintMatrix(this.rows);
-      // check again
-      this.handleEvent(key, updated, false);
-    } else {
-      // we are done moving
-      this.squeeze(key);
-      // paintMatrix(this.rows);
-      this.rows = cloneDeep(this.rows);
-      this.checkWin();
-      this.checkLose();
-      // add new numbers
-      this.addRandomNumbers();
-      paintMatrix(this.rows);
-      this.rows = cloneDeep(this.rows);
-    }
+    const newRows = this.getNewRows(key, updated);
+    this.rows = newRows;
+    // we are done moving
+    this.squeeze(key);
+    // paintMatrix(this.rows);
+    this.rows = newRows;
+    this.checkWin();
+    this.checkLose();
+    // add new numbers
+    this.addRandomNumbers();
+    paintMatrix(this.rows);
+    this.rows = cloneDeep(this.rows);
   };
   squeeze = key => {
     let moved = false;
@@ -329,6 +337,66 @@ export class Game {
 
       default:
         break;
+    }
+  };
+  handleAuto = () => {
+    this.isAuto = !this.isAuto;
+    if (this.autoInterval) {
+      clearInterval(this.autoInterval);
+    }
+    if (this.isAuto) {
+      this.autoSolve();
+      this.autoInterval = setInterval(() => {
+        this.autoSolve();
+      }, AUTO_INTERVAL);
+    }
+  };
+  autoSolve = () => {
+    // const move = this.getAutoMoveRandom();
+    const move = this.getAutoMoveMinFilled();
+    this.handleEvent(move);
+  };
+  getFilledCount = rows => {
+    let count = 0;
+    this.runForEachCell((i, j, cell) => {
+      if (cell) {
+        count++;
+      }
+    }, rows);
+    return count;
+  };
+  getAutoMoveMinFilled = () => {
+    let min = this.rows.length * this.rows[0].length;
+    let selected = this.getAutoMoveRandom();
+    let candidates = [];
+    for (let i = 0; i < ALL_MOVES.length; i++) {
+      const move = ALL_MOVES[i];
+      const newRows = this.getNewRows(move);
+      const filledCount = this.getFilledCount(newRows);
+      console.log('getAutoMoveMinFilled -> filledCount', filledCount);
+      if (filledCount < min) {
+        min = filledCount;
+        candidates = [move];
+      } else if (filledCount === min) {
+        candidates.push(move);
+      }
+    }
+    console.log('getAutoMoveMinFilled -> candidates count', candidates, min);
+    const random = Math.floor(Math.random() * candidates.length);
+    selected = candidates[random];
+    console.log('getAutoMoveMinFilled -> selected', selected);
+    return selected;
+  };
+  getAutoMoveRandom = () => {
+    const r = Math.random();
+    if (r < 0.25) {
+      return keys.ArrowDown;
+    } else if (r < 0.5) {
+      return keys.ArrowUp;
+    } else if (r < 0.75) {
+      return keys.ArrowLeft;
+    } else {
+      return keys.ArrowRight;
     }
   };
 }

@@ -5,9 +5,16 @@
     </div>
     <GameBoard v-bind:game="game" />
     <div class="buttons">
-      <div class="button button-primary">Magic</div>
+      <div
+        class="button button-primary"
+        v-on:click="game.handleAuto"
+        v-bind:class="{ active: game.isAuto }"
+      >
+        Magic
+      </div>
       <div class="button button-primary" v-on:click="game.restart">Restart</div>
     </div>
+    <div class="info">Win Condition: {{ game.winNumber }}</div>
     <div class="info">Move count: {{ game.moveCount }}</div>
     <div class="scores">
       Scores<span v-if="game.scores.length === 0"> (empty)</span>
@@ -144,10 +151,11 @@ a {
 
 .button {
   user-select: none;
-  padding: 4px;
+  /* https://medium.com/codyhouse/line-height-crop-a-simple-css-formula-to-remove-top-space-from-your-text-9c3de06d7c6f */
+  padding: 2px 4px 4px 4px;
   margin: 0 5px;
   width: 85px;
-  height: 30px;
+  height: 40px;
   display: flex;
   justify-content: center; /* align horizontal */
   align-items: center; /* align vertical */
@@ -156,8 +164,22 @@ a {
   border-radius: 4px;
 }
 
+.button.active {
+  font-weight: bold;
+  animation: 2s linear 0s infinite alternate auto-run;
+}
+
 .button:hover {
   cursor: pointer;
-  background-color: #bbada0;
+  background: #bbada0;
+}
+
+@keyframes auto-run {
+  from {
+    color: #f3b27a;
+  }
+  to {
+    color: #f75f3b;
+  }
 }
 </style>
