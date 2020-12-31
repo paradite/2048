@@ -252,7 +252,7 @@ export class Game {
     const newRows = this.getNewRows(this.rows, key, updated);
     this.rows = newRows;
     // we are done moving
-    this.squeeze(key);
+    this.squeeze(newRows, key);
     // paintMatrix(this.rows, PRINT);
     this.rows = newRows;
     this.checkWin();
@@ -262,25 +262,25 @@ export class Game {
     paintMatrix(this.rows, PRINT);
     this.rows = cloneDeep(this.rows);
   };
-  squeeze = key => {
+  squeeze = (rows, key) => {
     let moved = false;
-    for (let i = 0; i < this.rows.length; i++) {
-      const row = this.rows[i];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       for (let j = 0; j < row.length; j++) {
         const element = row[j];
         if (element) {
-          const destination = this.getSqueezeDestination(i, j, key);
+          const destination = this.getSqueezeDestination(rows, i, j, key);
           if (destination) {
             const [r, c] = destination;
             if (r === i && c === j) continue;
             // we need to move
             moved = true;
             row[j] = undefined;
-            if (this.rows[r][c]) {
+            if (rows[r][c]) {
               console.error('something wrong r c', r, c);
-              console.error('this.rows[r][c]', this.rows[r][c]);
+              console.error('rows[r][c]', rows[r][c]);
             } else {
-              this.rows[r][c] = element;
+              rows[r][c] = element;
             }
           }
         }
@@ -288,19 +288,16 @@ export class Game {
     }
 
     if (moved) {
-      // some numbers moved, we need to update board
-      // TODO: remove this hack
-      this.rows = cloneDeep(this.rows);
-      // squeeze again
-      this.squeeze(key);
+      // some numbers moved, we need to squeeze again
+      this.squeeze(rows, key);
     }
   };
-  getSqueezeDestination = (row, col, key) => {
+  getSqueezeDestination = (rows, row, col, key) => {
     switch (key) {
       case keys.ArrowUp:
         if (row === 0) return [row, col];
         for (let i = row - 1; i >= 0; i--) {
-          if (this.rows[i][col]) {
+          if (rows[i][col]) {
             return [i + 1, col];
           } else {
             continue;
@@ -309,20 +306,20 @@ export class Game {
         return [0, col];
 
       case keys.ArrowDown:
-        if (row === this.rows.length - 1) return [row, col];
-        for (let i = row + 1; i <= this.rows.length - 1; i++) {
-          if (this.rows[i][col]) {
+        if (row === rows.length - 1) return [row, col];
+        for (let i = row + 1; i <= rows.length - 1; i++) {
+          if (rows[i][col]) {
             return [i - 1, col];
           } else {
             continue;
           }
         }
-        return [this.rows.length - 1, col];
+        return [rows.length - 1, col];
 
       case keys.ArrowLeft:
         if (col === 0) return [row, col];
         for (let i = col - 1; i >= 0; i--) {
-          if (this.rows[row][i]) {
+          if (rows[row][i]) {
             return [row, i + 1];
           } else {
             continue;
@@ -331,15 +328,15 @@ export class Game {
         return [row, 0];
 
       case keys.ArrowRight:
-        if (col === this.rows[0].length - 1) return [row, col];
-        for (let i = col + 1; i <= this.rows[0].length - 1; i++) {
-          if (this.rows[row][i]) {
+        if (col === rows[0].length - 1) return [row, col];
+        for (let i = col + 1; i <= rows[0].length - 1; i++) {
+          if (rows[row][i]) {
             return [row, i - 1];
           } else {
             continue;
           }
         }
-        return [row, this.rows[0].length - 1];
+        return [row, rows[0].length - 1];
 
       default:
         break;
@@ -424,6 +421,7 @@ export class Game {
       for (let j = 0; j < ALL_MOVES.length; j++) {
         const move2 = ALL_MOVES[j];
         let newRows = this.getNewRows(this.rows, move);
+        this.squeeze(newRows, move);
         newRows = this.getNewRows(newRows, move2);
         const filledCount = this.getFilledCount(newRows);
         const max = this.getMax(newRows);
@@ -481,6 +479,7 @@ export class Game {
       for (let j = 0; j < moves.length; j++) {
         const move = moves[j];
         newRows = this.getNewRows(newRows, move);
+        this.squeeze(newRows, move);
       }
       const filledCount = this.getFilledCount(newRows);
       const max = this.getMax(newRows);
