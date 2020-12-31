@@ -4,6 +4,13 @@
       2048 Game by <a href="https://github.com/paradite/vue2048">@paradite</a>
     </div>
     <GameBoard v-bind:game="game" />
+    <div class="info">Move count: {{ game.moveCount }}</div>
+    <div class="scores">
+      Scores<span v-if="game.scores.length === 0"> (empty)</span>
+      <div v-for="(score, i) in game.scores" :key="i">
+        {{ score }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -109,7 +116,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
 
 a {
@@ -117,6 +123,10 @@ a {
 }
 
 .header {
-  margin-bottom: 4px;
+  margin: 20px;
+}
+
+.info {
+  margin: 10px;
 }
 </style>

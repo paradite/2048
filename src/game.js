@@ -8,15 +8,64 @@ export const keys = {
   ArrowDown: 'ArrowDown'
 };
 
+const WIN_NUMBER = 2048;
+
 export class Game {
   constructor() {
     this.rows = new Array(4);
+    this.resetRows();
+    this.addRandomNumbers();
+    this.moved = {};
+    this.moveCount = 0;
+    this.scores = [];
+  }
+  resetRows = () => {
     for (let i = 0; i < this.rows.length; i++) {
       this.rows[i] = new Array(4);
     }
-    this.addRandomNumbers();
-    this.moved = {};
-  }
+  };
+  restart = () => {
+    this.moveCount = 0;
+    this.resetRows();
+  };
+  isValidKey = key => {
+    return (
+      key === keys.ArrowUp ||
+      key === keys.ArrowDown ||
+      key === keys.ArrowLeft ||
+      key === keys.ArrowRight
+    );
+  };
+  checkWin = () => {
+    this.runForEachCell((i, j, cell) => {
+      if (cell === WIN_NUMBER) {
+        this.scores.push(this.moveCount);
+        this.restart();
+      }
+    });
+  };
+  checkLose = () => {
+    let total = this.rows.length * this.rows[0].length;
+    let count = 0;
+    this.runForEachCell((i, j, cell) => {
+      if (cell) {
+        count++;
+      }
+    });
+    if (total === count) {
+      this.scores.push(0);
+      this.restart();
+    }
+  };
+  runForEachCell = fn => {
+    for (let i = 0; i < this.rows.length; i++) {
+      const row = this.rows[i];
+      for (let j = 0; j < row.length; j++) {
+        const cell = row[j];
+        fn(i, j, cell);
+      }
+    }
+  };
   addRandomNumbers = () => {
     for (let i = 0; i < 2; i++) {
       let row = this.getRandomPosition();
@@ -141,7 +190,9 @@ export class Game {
         break;
     }
   };
-  handleEvent = (event, updated = {}) => {
+  handleEvent = (key, updated = {}, first = true) => {
+    if (!this.isValidKey(key)) return;
+    if (first) this.moveCount++;
     let moved = false;
     for (let i = 0; i < this.rows.length; i++) {
       const row = this.rows[i];
@@ -153,7 +204,7 @@ export class Game {
             i,
             j,
             element,
-            event,
+            key,
             updated
           );
           if (destination) {
@@ -183,25 +234,28 @@ export class Game {
       // TODO: remove this hack
       // paintMatrix(this.rows);
       // check again
-      this.handleEvent(event, updated);
+      this.handleEvent(key, updated, false);
     } else {
       // we are done moving
-      this.squeeze(event);
+      this.squeeze(key);
       // paintMatrix(this.rows);
+      this.rows = cloneDeep(this.rows);
+      this.checkWin();
+      this.checkLose();
       // add new numbers
       this.addRandomNumbers();
       paintMatrix(this.rows);
       this.rows = cloneDeep(this.rows);
     }
   };
-  squeeze = event => {
+  squeeze = key => {
     let moved = false;
     for (let i = 0; i < this.rows.length; i++) {
       const row = this.rows[i];
       for (let j = 0; j < row.length; j++) {
         const element = row[j];
         if (element) {
-          const destination = this.getSqueezeDestination(i, j, event);
+          const destination = this.getSqueezeDestination(i, j, key);
           if (destination) {
             const [r, c] = destination;
             if (r === i && c === j) continue;
@@ -224,7 +278,7 @@ export class Game {
       // TODO: remove this hack
       this.rows = cloneDeep(this.rows);
       // squeeze again
-      this.squeeze(event);
+      this.squeeze(key);
     }
   };
   getSqueezeDestination = (row, col, key) => {
