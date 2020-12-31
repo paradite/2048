@@ -12,17 +12,17 @@ const WIN_NUMBER = 2048;
 
 export class Game {
   constructor() {
-    this.rows = new Array(4);
     this.resetRows();
-    this.addRandomNumbers();
     this.moved = {};
     this.moveCount = 0;
     this.scores = [];
   }
   resetRows = () => {
+    this.rows = new Array(4);
     for (let i = 0; i < this.rows.length; i++) {
       this.rows[i] = new Array(4);
     }
+    this.addRandomNumbers();
   };
   restart = () => {
     this.moveCount = 0;

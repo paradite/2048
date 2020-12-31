@@ -4,6 +4,10 @@
       2048 Game by <a href="https://github.com/paradite/vue2048">@paradite</a>
     </div>
     <GameBoard v-bind:game="game" />
+    <div class="buttons">
+      <div class="button button-primary">Magic</div>
+      <div class="button button-primary" v-on:click="game.restart">Restart</div>
+    </div>
     <div class="info">Move count: {{ game.moveCount }}</div>
     <div class="scores">
       Scores<span v-if="game.scores.length === 0"> (empty)</span>
@@ -128,5 +132,32 @@ a {
 
 .info {
   margin: 10px;
+}
+
+.buttons {
+  display: flex;
+  text-align: center;
+  width: 330px;
+  margin: 10px auto;
+  justify-content: space-around;
+}
+
+.button {
+  user-select: none;
+  padding: 4px;
+  margin: 0 5px;
+  width: 85px;
+  height: 30px;
+  display: flex;
+  justify-content: center; /* align horizontal */
+  align-items: center; /* align vertical */
+  background: #8f7a66;
+  color: #f9f6f2;
+  border-radius: 4px;
+}
+
+.button:hover {
+  cursor: pointer;
+  background-color: #bbada0;
 }
 </style>
