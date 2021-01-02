@@ -17,8 +17,8 @@ const ALL_MOVES = [
 ];
 
 const WIN_NUMBER = 2048;
-// const WIN_NUMBER = 512;
-const AUTO_INTERVAL = 100;
+// const WIN_NUMBER = 32;
+const AUTO_INTERVAL = 50;
 const PRINT = false;
 
 class Cell {
@@ -28,10 +28,6 @@ class Cell {
     this.number = number;
     this.count = count;
     this.id = uuidv4();
-  }
-
-  isWining() {
-    return this.number === WIN_NUMBER;
   }
 
   is(number) {
@@ -53,7 +49,7 @@ export class Game {
   constructor() {
     this.rows = [];
     this.cells = [];
-    this.resetRows();
+    this.restart();
     this.moved = {};
     this.moveCount = 0;
     this.scores = [];
@@ -100,10 +96,10 @@ export class Game {
     this.updateCells();
   }
 
-  restart() {
+  restart = () => {
     this.moveCount = 0;
     this.resetRows();
-  }
+  };
 
   updateCells() {
     let cells = [];
@@ -125,14 +121,19 @@ export class Game {
   }
 
   checkWin() {
+    let win = false;
     this.runForEachCell((i, j, cell) => {
-      if (cell && cell.is(this.winNumber)) {
-        this.scores.push(this.moveCount);
+      if (cell && cell.number === Game.winNumber) {
+        this.scores.push([this.moveCount, Game.winNumber]);
+        win = true;
         // prettier-ignore
         console.log('score, moves filled', this.moveCount, this.moveCount, this.getFilledCount(this.rows));
-        this.restart();
       }
     });
+    if (win) {
+      this.restart.call(this);
+      return true;
+    }
   }
 
   checkLose() {
@@ -144,10 +145,11 @@ export class Game {
       }
     });
     if (total === count) {
-      this.scores.push(0);
+      this.scores.push([this.moveCount, this.getMax(this.rows)]);
       // prettier-ignore
       console.log('score, moves filled', 0, this.moveCount, this.getFilledCount(this.rows));
       this.restart();
+      return true;
     }
   }
   runForEachCell = (fn, rows = this.rows) => {
@@ -327,8 +329,14 @@ export class Game {
     // paintMatrix(this.rows, PRINT);
     this.rows = newRows;
     this.updateCells();
-    this.checkWin();
-    this.checkLose();
+    let terminate = this.checkWin();
+    if (terminate) {
+      return;
+    }
+    terminate = this.checkLose();
+    if (terminate) {
+      return;
+    }
     // add new numbers
     this.addRandomNumbers(1, newRows);
     paintMatrix(newRows, PRINT);

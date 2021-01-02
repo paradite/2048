@@ -14,16 +14,17 @@
       >
         Magic
       </div>
-      <div class="button button-primary" v-on:click="game.restart">Restart</div>
+      <div class="button button-primary" v-on:click="game.restart">
+        Restart
+      </div>
     </div>
-    <div class="info">Win Condition: {{ game.winNumber }}</div>
     <div class="info">Move count: {{ game.moveCount }}</div>
     <div class="scores">
-      Scores<span v-if="game.scores.length === 0"> (empty)</span>
+      High Scores
       <br />
+      <span v-if="game.scores.length === 0"> (empty)</span>
       <div v-for="(score, i) in game.scores" :key="i" class="score">
-        {{ score
-        }}<span v-if="i < game.scores.length - 1" class="score-divider">,</span>
+        [moves: {{ score[0] }}, max: {{ score[1] }}]
       </div>
     </div>
   </div>
@@ -198,7 +199,7 @@ a {
 }
 
 .score {
-  display: inline-block;
+  display: block;
 }
 
 .score-divider {
