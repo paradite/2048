@@ -9,10 +9,10 @@ export const paintMatrix = (rows, print) => {
     let result = '';
     let row = rows[i];
     for (let j = 0; j < row.length; j++) {
-      if (row[j] && row[j] >= 10) {
-        result += row[j] + ' ';
+      if (row[j] && row[j].number >= 10) {
+        result += row[j].number + ' ';
       } else if (row[j]) {
-        result += row[j] + '  ';
+        result += row[j].number + '  ';
       } else {
         result += '.' + '  ';
       }

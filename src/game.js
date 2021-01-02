@@ -1,4 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
+import { v4 as uuidv4 } from 'uuid';
 import { paintMatrix } from './util';
 
 export const keys = {
@@ -17,31 +18,50 @@ const ALL_MOVES = [
 
 const WIN_NUMBER = 2048;
 // const WIN_NUMBER = 512;
-const AUTO_INTERVAL = 20;
+const AUTO_INTERVAL = 100;
 const PRINT = false;
 
+class Cell {
+  constructor(row, col, number, count) {
+    this.row = row;
+    this.col = col;
+    this.number = number;
+    this.count = count;
+    this.id = uuidv4();
+  }
+
+  isWining() {
+    return this.number === WIN_NUMBER;
+  }
+
+  is(number) {
+    return this.number === number;
+  }
+
+  add(toAdd) {
+    this.number = this.number + toAdd;
+  }
+
+  updatePos(row, col) {
+    this.row = row;
+    this.col = col;
+  }
+}
+
 export class Game {
+  static winNumber = WIN_NUMBER;
   constructor() {
+    this.rows = [];
+    this.cells = [];
     this.resetRows();
     this.moved = {};
     this.moveCount = 0;
     this.scores = [];
     this.isAuto = false;
     this.autoInterval = null;
-    this.winNumber = WIN_NUMBER;
   }
-  resetRows = () => {
-    this.rows = new Array(4);
-    for (let i = 0; i < this.rows.length; i++) {
-      this.rows[i] = new Array(4);
-    }
-    this.addRandomNumbers(2);
-  };
-  restart = () => {
-    this.moveCount = 0;
-    this.resetRows();
-  };
-  isValidKey = key => {
+
+  static isValidKey = key => {
     return (
       key === keys.ArrowUp ||
       key === keys.ArrowDown ||
@@ -49,17 +69,73 @@ export class Game {
       key === keys.ArrowRight
     );
   };
-  checkWin = () => {
+
+  static addNumberToPosition = (number, row, col, count, rows) => {
+    const cell = new Cell(row, col, number, count);
+    rows[row][col] = cell;
+  };
+
+  static getRandomPosition = () => {
+    const r = Math.random();
+    if (r < 0.25) {
+      return 0;
+    } else if (r < 0.5) {
+      return 1;
+    } else if (r < 0.75) {
+      return 2;
+    } else {
+      return 3;
+    }
+  };
+  static getRandomNumber = () => {
+    return 2;
+  };
+
+  resetRows() {
+    this.rows = new Array(4);
+    for (let i = 0; i < this.rows.length; i++) {
+      this.rows[i] = new Array(4);
+    }
+    this.addRandomNumbers(2, this.rows);
+    this.updateCells();
+  }
+
+  restart() {
+    this.moveCount = 0;
+    this.resetRows();
+  }
+
+  updateCells() {
+    let cells = [];
     this.runForEachCell((i, j, cell) => {
-      if (cell === this.winNumber) {
+      if (cell) {
+        cells.push(cell);
+      }
+    });
+    cells.sort((a, b) => {
+      if (a.id < b.id) {
+        return -1;
+      }
+      if (a.id > b.id) {
+        return 1;
+      }
+      return 0;
+    });
+    this.cells = cells;
+  }
+
+  checkWin() {
+    this.runForEachCell((i, j, cell) => {
+      if (cell && cell.is(this.winNumber)) {
         this.scores.push(this.moveCount);
         // prettier-ignore
         console.log('score, moves filled', this.moveCount, this.moveCount, this.getFilledCount(this.rows));
         this.restart();
       }
     });
-  };
-  checkLose = () => {
+  }
+
+  checkLose() {
     let total = this.rows.length * this.rows[0].length;
     let count = 0;
     this.runForEachCell((i, j, cell) => {
@@ -73,7 +149,7 @@ export class Game {
       console.log('score, moves filled', 0, this.moveCount, this.getFilledCount(this.rows));
       this.restart();
     }
-  };
+  }
   runForEachCell = (fn, rows = this.rows) => {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -83,37 +159,25 @@ export class Game {
       }
     }
   };
-  addRandomNumbers = count => {
+
+  addRandomNumbers(count, rows) {
     for (let i = 0; i < count; i++) {
-      let row = this.getRandomPosition();
-      let col = this.getRandomPosition();
+      let row = Game.getRandomPosition();
+      let col = Game.getRandomPosition();
+      // TODO: get random position from emtpy cells
       let tries = 3;
-      while (this.rows[row][col] && tries) {
-        row = this.getRandomPosition();
-        col = this.getRandomPosition();
+      while (rows[row][col] && tries) {
+        row = Game.getRandomPosition();
+        col = Game.getRandomPosition();
         tries--;
       }
-      if (this.rows[row][col]) return;
-      const n = this.getRandomNumber();
-      this.rows[row][col] = n;
+      if (rows[row][col]) return;
+      const n = Game.getRandomNumber();
+      Game.addNumberToPosition(n, row, col, this.moveCount, rows);
     }
-  };
-  getRandomPosition = () => {
-    const r = Math.random();
-    if (r < 0.25) {
-      return 0;
-    } else if (r < 0.5) {
-      return 1;
-    } else if (r < 0.75) {
-      return 2;
-    } else {
-      return 3;
-    }
-  };
-  getRandomNumber = () => {
-    return 2;
-  };
-  getMoveDestination = (rows, row, col, number, key, updated) => {
+  }
+
+  static getMoveDestination = (rows, row, col, number, key, updated) => {
     switch (key) {
       case keys.ArrowUp:
         if (row === 0) return [row, col];
@@ -126,10 +190,10 @@ export class Game {
             }
           }
           if (rows[i][col]) {
-            if (rows[i][col] !== number) {
-              return [i + 1, col];
-            } else {
+            if (rows[i][col].is(number)) {
               return [i, col];
+            } else {
+              return [i + 1, col];
             }
           } else {
             continue;
@@ -148,10 +212,10 @@ export class Game {
             }
           }
           if (rows[i][col]) {
-            if (rows[i][col] !== number) {
-              return [i - 1, col];
-            } else {
+            if (rows[i][col].is(number)) {
               return [i, col];
+            } else {
+              return [i - 1, col];
             }
           } else {
             continue;
@@ -170,10 +234,10 @@ export class Game {
             }
           }
           if (rows[row][i]) {
-            if (rows[row][i] !== number) {
-              return [row, i + 1];
-            } else {
+            if (rows[row][i].is(number)) {
               return [row, i];
+            } else {
+              return [row, i + 1];
             }
           } else {
             continue;
@@ -192,10 +256,10 @@ export class Game {
             }
           }
           if (rows[row][i]) {
-            if (rows[row][i] !== number) {
-              return [row, i - 1];
-            } else {
+            if (rows[row][i].is(number)) {
               return [row, i];
+            } else {
+              return [row, i - 1];
             }
           } else {
             continue;
@@ -207,19 +271,20 @@ export class Game {
         break;
     }
   };
-  getNewRows = (rows, key, updated = {}) => {
+  getNewRows(rows, key, updated = {}) {
     let newRows = cloneDeep(rows);
     for (let i = 0; i < newRows.length; i++) {
       const row = newRows[i];
       for (let j = 0; j < row.length; j++) {
         if (updated[`${i}-${j}`]) continue;
-        const element = row[j];
-        if (element) {
-          const destination = this.getMoveDestination(
+        const cell = row[j];
+        if (cell) {
+          const number = cell.number;
+          const destination = Game.getMoveDestination(
             newRows,
             i,
             j,
-            element,
+            number,
             key,
             updated
           );
@@ -228,41 +293,49 @@ export class Game {
             if (r === i && c === j) continue;
             updated[`${r}-${c}`] = true;
             // we need to move
-            row[j] = undefined;
+            let existing = row[j];
             if (newRows[r][c]) {
-              if (element !== newRows[r][c]) {
+              if (!newRows[r][c].is(number)) {
                 console.error(
-                  `element ${element} from ${i},${j} moved to ${r},${c} with ${newRows[r][c]}`
+                  `cell ${cell} from ${i},${j} moved to ${r},${c} with ${newRows[r][c]}`
                 );
               }
-              newRows[r][c] = element + newRows[r][c];
+              existing.add(newRows[r][c].number, existing);
+              existing.updatePos(r, c);
+              newRows[r][c] = existing;
+              row[j] = undefined;
             } else {
-              newRows[r][c] = element;
+              // no change in number, move position
+              existing.updatePos(r, c);
+              newRows[r][c] = existing;
+              row[j] = undefined;
             }
           }
         }
       }
     }
     return newRows;
-  };
-  handleEvent = (key, updated = {}, first = true) => {
-    if (!this.isValidKey(key)) return;
+  }
+  handleEvent(key, updated = {}, first = true) {
+    if (!Game.isValidKey(key)) return;
     if (first) this.moveCount++;
 
     const newRows = this.getNewRows(this.rows, key, updated);
-    this.rows = newRows;
+    // this.rows = newRows;
     // we are done moving
     this.squeeze(newRows, key);
     // paintMatrix(this.rows, PRINT);
     this.rows = newRows;
+    this.updateCells();
     this.checkWin();
     this.checkLose();
     // add new numbers
-    this.addRandomNumbers(1);
-    paintMatrix(this.rows, PRINT);
-    this.rows = cloneDeep(this.rows);
-  };
-  squeeze = (rows, key) => {
+    this.addRandomNumbers(1, newRows);
+    paintMatrix(newRows, PRINT);
+    this.rows = newRows;
+    this.updateCells();
+  }
+  squeeze(rows, key) {
     let moved = false;
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -275,12 +348,14 @@ export class Game {
             if (r === i && c === j) continue;
             // we need to move
             moved = true;
-            row[j] = undefined;
+            let existing = row[j];
             if (rows[r][c]) {
               console.error('something wrong r c', r, c);
               console.error('rows[r][c]', rows[r][c]);
             } else {
-              rows[r][c] = element;
+              existing.updatePos(r, c);
+              rows[r][c] = existing;
+              row[j] = undefined;
             }
           }
         }
@@ -291,8 +366,8 @@ export class Game {
       // some numbers moved, we need to squeeze again
       this.squeeze(rows, key);
     }
-  };
-  getSqueezeDestination = (rows, row, col, key) => {
+  }
+  getSqueezeDestination(rows, row, col, key) {
     switch (key) {
       case keys.ArrowUp:
         if (row === 0) return [row, col];
@@ -341,7 +416,7 @@ export class Game {
       default:
         break;
     }
-  };
+  }
   handleAuto = () => {
     this.isAuto = !this.isAuto;
     if (this.autoInterval) {
@@ -354,15 +429,15 @@ export class Game {
       }, AUTO_INTERVAL);
     }
   };
-  autoSolve = () => {
+  autoSolve() {
     // const move = this.getAutoMoveRandom();
     // const move = this.getAutoMoveMinFilled();
     // const move = this.getAutoMoveMinFilledTwoSteps();
     const move = this.getAutoMoveMinFilledNSteps(3);
     // const move = this.getAutoMoveMinFilledNSteps(4);
     this.handleEvent(move);
-  };
-  getFilledCount = rows => {
+  }
+  getFilledCount(rows) {
     let count = 0;
     this.runForEachCell((i, j, cell) => {
       if (cell) {
@@ -370,17 +445,17 @@ export class Game {
       }
     }, rows);
     return count;
-  };
-  getMax = rows => {
+  }
+  getMax(rows) {
     let max = 0;
     this.runForEachCell((i, j, cell) => {
-      if (cell && cell > max) {
-        max = cell;
+      if (cell && cell.number > max) {
+        max = cell.number;
       }
     }, rows);
     return max;
-  };
-  getAutoMoveMinFilled = () => {
+  }
+  getAutoMoveMinFilled() {
     let minFilled = this.rows.length * this.rows[0].length;
     let maxCell = 0;
     let selected = this.getAutoMoveRandom();
@@ -408,9 +483,9 @@ export class Game {
     selected = candidates[random] ? candidates[random] : selected;
     // console.log('getAutoMoveMinFilled -> selected', selected);
     return selected;
-  };
+  }
 
-  getAutoMoveMinFilledTwoSteps = () => {
+  getAutoMoveMinFilledTwoSteps() {
     const current = this.getFilledCount(this.rows);
     let minFilled = this.rows.length * this.rows[0].length;
     let maxCell = 0;
@@ -448,9 +523,9 @@ export class Game {
     selected = candidates[random] ? candidates[random] : selected;
     // console.log('getAutoMoveMinFilled -> selected', selected);
     return selected;
-  };
+  }
 
-  getAutoMoveMinFilledNSteps = n => {
+  getAutoMoveMinFilledNSteps(n) {
     const current = this.getFilledCount(this.rows);
     let minFilled = this.rows.length * this.rows[0].length;
     let maxCell = 0;
@@ -505,9 +580,9 @@ export class Game {
     selected = candidates[random] ? candidates[random] : selected;
     // console.log('getAutoMoveMinFilled -> selected', selected);
     return selected;
-  };
+  }
 
-  getAutoMoveRandom = () => {
+  getAutoMoveRandom() {
     const r = Math.random();
     if (r < 0.25) {
       return keys.ArrowDown;
@@ -518,5 +593,5 @@ export class Game {
     } else {
       return keys.ArrowRight;
     }
-  };
+  }
 }
