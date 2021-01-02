@@ -131,7 +131,7 @@ export class Game {
       }
     });
     if (win) {
-      this.restart.call(this);
+      this.restart();
       return true;
     }
   }
