@@ -4,9 +4,14 @@ Live at [https://paradite.github.io/vue2048/](https://paradite.github.io/vue2048
 
 ## TODO
 
+UI
 - Movement animations
+- New cell spawn animations
+
+Logic
 - More idiomatic use of vue.js
 - Better AI solver
+- Ability to change auto solve speed
 
 ## Project setup
 
