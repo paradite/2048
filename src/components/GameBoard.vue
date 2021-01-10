@@ -64,15 +64,13 @@ export default {
     };
   },
   computed: {
-    cells() {
-      return this.game.cells;
-    },
     totalSize() {
       return this.cellSize * 4 + this.marginSize * 3;
     }
   },
   props: {
     game: Game,
+    cells: Array,
     rows: Array
   }
 };
