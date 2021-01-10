@@ -17,8 +17,6 @@ const ALL_MOVES = [
 ];
 
 const WIN_NUMBER = 2048;
-// const WIN_NUMBER = 32;
-const AUTO_INTERVAL = 50;
 const PRINT = false;
 
 class Cell {
@@ -342,6 +340,7 @@ export class Game {
     paintMatrix(newRows, PRINT);
     this.rows = newRows;
     this.updateCells();
+    return this.cells;
   }
   squeeze(rows, key) {
     let moved = false;
@@ -425,25 +424,13 @@ export class Game {
         break;
     }
   }
-  handleAuto = () => {
-    this.isAuto = !this.isAuto;
-    if (this.autoInterval) {
-      clearInterval(this.autoInterval);
-    }
-    if (this.isAuto) {
-      this.autoSolve();
-      this.autoInterval = setInterval(() => {
-        this.autoSolve();
-      }, AUTO_INTERVAL);
-    }
-  };
   autoSolve() {
     // const move = this.getAutoMoveRandom();
     // const move = this.getAutoMoveMinFilled();
     // const move = this.getAutoMoveMinFilledTwoSteps();
     const move = this.getAutoMoveMinFilledNSteps(3);
     // const move = this.getAutoMoveMinFilledNSteps(4);
-    this.handleEvent(move);
+    return this.handleEvent(move);
   }
   getFilledCount(rows) {
     let count = 0;

@@ -5,16 +5,16 @@
       by
       <a href="https://github.com/paradite/2048">@paradite</a>
     </div>
-    <GameBoard v-bind:game="game" />
+    <GameBoard v-bind:game="game" v-bind:cells="cells" />
     <div class="buttons">
       <div
         class="button button-primary"
-        v-on:click="game.handleAuto"
+        v-on:click="handleAuto"
         v-bind:class="{ active: game.isAuto }"
       >
         Magic
       </div>
-      <div class="button button-primary" v-on:click="game.restart">
+      <div class="button button-primary" v-on:click="restart">
         Restart
       </div>
     </div>
@@ -36,6 +36,8 @@ import { Game, keys } from './game';
 
 const game = new Game();
 
+const AUTO_INTERVAL = 50;
+
 export default {
   name: 'App',
   components: {
@@ -43,7 +45,7 @@ export default {
   },
   mounted() {
     window.onkeyup = e => {
-      game.handleEvent(e.code);
+      this.cells = game.handleEvent(e.code);
     };
 
     // https://stackoverflow.com/a/23230280/1472186
@@ -79,15 +81,15 @@ export default {
       if (Math.abs(xDiff) > Math.abs(yDiff)) {
         /*most significant*/
         if (xDiff > 0) {
-          game.handleEvent(keys.ArrowLeft);
+          this.cells = game.handleEvent(keys.ArrowLeft);
         } else {
-          game.handleEvent(keys.ArrowRight);
+          this.cells = game.handleEvent(keys.ArrowRight);
         }
       } else {
         if (yDiff > 0) {
-          game.handleEvent(keys.ArrowUp);
+          this.cells = game.handleEvent(keys.ArrowUp);
         } else {
-          game.handleEvent(keys.ArrowDown);
+          this.cells = game.handleEvent(keys.ArrowDown);
         }
       }
       /* reset values */
@@ -95,8 +97,25 @@ export default {
       yDown = null;
     }
   },
-  data: () => {
-    return { game, rows: game.rows };
+  data() {
+    return { game, cells: game.cells, isAuto: false, autoInterval: null };
+  },
+  methods: {
+    restart() {
+      this.cells = game.restart();
+    },
+    handleAuto() {
+      this.isAuto = !this.isAuto;
+      if (this.autoInterval) {
+        clearInterval(this.autoInterval);
+      }
+      if (this.isAuto) {
+        this.cells = game.autoSolve();
+        this.autoInterval = setInterval(() => {
+          this.cells = game.autoSolve();
+        }, AUTO_INTERVAL);
+      }
+    }
   }
 };
 </script>
