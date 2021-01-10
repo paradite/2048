@@ -1,14 +1,16 @@
-# vue2048
+# 2048
 
 Live at [https://paradite.github.io/2048/](https://paradite.github.io/2048/)
 
 ## TODO
 
 UI
-- [X] Movement animations
-- [X] New cell spawn animations
+
+- [x] Movement animations
+- [x] New cell spawn animations
 
 Logic
+
 - [ ] More idiomatic use of vue.js
 - [ ] Better OOP
 - [ ] Better AI solver

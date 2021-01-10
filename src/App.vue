@@ -3,7 +3,7 @@
     <div class="header">
       2048 game with an auto solver<br />
       by
-      <a href="https://github.com/paradite/vue2048">@paradite</a>
+      <a href="https://github.com/paradite/2048">@paradite</a>
     </div>
     <GameBoard v-bind:game="game" />
     <div class="buttons">
