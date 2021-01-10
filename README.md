@@ -1,6 +1,6 @@
 # vue2048
 
-Live at [https://paradite.github.io/vue2048/](https://paradite.github.io/vue2048/)
+Live at [https://paradite.github.io/2048/](https://paradite.github.io/2048/)
 
 ## TODO
 
