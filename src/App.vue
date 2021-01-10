@@ -98,7 +98,6 @@ export default {
     }
   },
   data() {
-    console.log('game.cells', game.cells);
     return { game, cells: game.cells, isAuto: false, autoInterval: null };
   },
   methods: {

@@ -17,7 +17,6 @@ const ALL_MOVES = [
 ];
 
 const WIN_NUMBER = 2048;
-// const WIN_NUMBER = 32;
 const PRINT = false;
 
 class Cell {
@@ -431,8 +430,7 @@ export class Game {
     // const move = this.getAutoMoveMinFilledTwoSteps();
     const move = this.getAutoMoveMinFilledNSteps(3);
     // const move = this.getAutoMoveMinFilledNSteps(4);
-    const cells = this.handleEvent(move);
-    return cells;
+    return this.handleEvent(move);
   }
   getFilledCount(rows) {
     let count = 0;
