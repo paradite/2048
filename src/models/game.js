@@ -1,23 +1,49 @@
 import cloneDeep from 'lodash.clonedeep';
-import { keys } from '../util';
+import { paintMatrix, keys } from '../util';
 import { Cell } from './cell';
 
 const WIN_NUMBER = 2048;
+const PRINT = false;
+
+const testRows = [
+  [
+    [undefined, 2, 32, 4],
+    [undefined, undefined, undefined, 32],
+    [undefined, undefined, 2, 4],
+    [undefined, undefined, 2, undefined]
+  ],
+  [
+    [undefined, undefined, undefined, undefined],
+    [undefined, undefined, 4, 4],
+    [undefined, 2, 8, 8],
+    [2, 128, 256, 4]
+  ],
+  [
+    [8, 64, 4, undefined],
+    [8, 256, 8, 2],
+    [4, 32, 512, 128],
+    [2, 4, 16, 2]
+  ]
+];
 
 export class Game {
   static winNumber = WIN_NUMBER;
+  static rowCount = 4;
+  static colCount = 4;
 
   constructor() {
     this.rows = [];
     this.cells = [];
     this.moved = {};
     this.moveCount = 0;
-    this.scores = [];
+    this.score = 0;
+    this.highScores = [];
     this.isAuto = false;
     this.autoInterval = null;
   }
 
-  static getNextState(rows, key, updated = {}) {
+  static getNextState(rows, key, moveCount, updated = {}) {
+    let points = 0;
     let newRows = cloneDeep(rows);
     for (let i = 0; i < newRows.length; i++) {
       const row = newRows[i];
@@ -37,7 +63,6 @@ export class Game {
           if (destination) {
             const [r, c] = destination;
             if (r === i && c === j) continue;
-            updated[`${r}-${c}`] = true;
             // we need to move
             let existing = row[j];
             if (newRows[r][c]) {
@@ -46,7 +71,9 @@ export class Game {
                   `cell ${cell} from ${i},${j} moved to ${r},${c} with ${newRows[r][c]}`
                 );
               }
+              updated[`${r}-${c}`] = true;
               existing.add(newRows[r][c].number, existing);
+              points += existing.number;
               existing.updatePos(r, c);
               newRows[r][c] = existing;
               row[j] = undefined;
@@ -60,7 +87,13 @@ export class Game {
         }
       }
     }
-    return newRows;
+
+    // auto move
+    Game.squeeze(newRows, key);
+
+    // add new numbers
+    Game.addRandomNumbers(1, newRows, moveCount);
+    return [newRows, points];
   }
 
   static runForEachCell(fn, rows) {
@@ -112,6 +145,10 @@ export class Game {
       }
     }, rows);
     return count;
+  }
+
+  static getEmptyCount(rows) {
+    return Game.rowCount * Game.colCount - Game.getFilledCount(rows);
   }
 
   static getMoveDestination = (rows, row, col, number, key, updated) => {
@@ -303,18 +340,64 @@ export class Game {
     return max;
   }
 
-  resetRows() {
-    this.rows = new Array(4);
-    for (let i = 0; i < this.rows.length; i++) {
-      this.rows[i] = new Array(4);
+  static getRandomEmptyCell(rows) {
+    let candidates = [];
+    Game.runForEachCell((i, j, cell) => {
+      if (!cell) {
+        candidates.push([i, j]);
+      }
+    }, rows);
+    if (candidates.length === 0) {
+      return [0, 0];
     }
-    this.addRandomNumbers(2, this.rows);
+    const random = Math.floor(Math.random() * candidates.length);
+    return candidates[random];
+  }
+
+  static addRandomNumbers(count, rows, moveCount) {
+    for (let i = 0; i < count; i++) {
+      let [row, col] = Game.getRandomEmptyCell(rows);
+      if (rows[row][col]) {
+        return;
+      }
+      const n = Game.getRandomNumber();
+      Game.addNumberToPosition(n, row, col, moveCount, rows);
+    }
+  }
+
+  resetRows() {
+    this.rows = new Array(Game.rowCount);
+    for (let i = 0; i < this.rows.length; i++) {
+      this.rows[i] = new Array(Game.colCount);
+    }
+    Game.addRandomNumbers(2, this.rows, this.moveCount);
+    this.updateCells();
+  }
+
+  setupTest(number) {
+    this.rows = new Array(Game.rowCount);
+    for (let i = 0; i < this.rows.length; i++) {
+      this.rows[i] = new Array(Game.colCount);
+    }
+    Game.runForEachCell((i, j) => {
+      if (testRows[number][i][j]) {
+        Game.addNumberToPosition(
+          testRows[number][i][j],
+          i,
+          j,
+          this.moveCount,
+          this.rows
+        );
+      }
+    }, this.rows);
     this.updateCells();
   }
 
   restart() {
     this.moveCount = 0;
+    this.score = 0;
     this.resetRows();
+    // this.setupTest(2);
   }
 
   updateCells() {
@@ -340,10 +423,8 @@ export class Game {
     let win = false;
     Game.runForEachCell((i, j, cell) => {
       if (cell && cell.number === Game.winNumber) {
-        this.scores.push([this.moveCount, Game.winNumber]);
+        this.highScores.push([this.score, this.moveCount, Game.winNumber]);
         win = true;
-        // prettier-ignore
-        console.log('score, moves filled', this.moveCount, this.moveCount, Game.getFilledCount(this.rows));
       }
     }, this.rows);
     if (win) {
@@ -361,28 +442,35 @@ export class Game {
       }
     }, this.rows);
     if (total === count) {
-      this.scores.push([this.moveCount, Game.getMax(this.rows)]);
-      // prettier-ignore
-      console.log('score, moves filled', 0, this.moveCount, Game.getFilledCount(this.rows));
+      this.highScores.push([
+        this.score,
+        this.moveCount,
+        Game.getMax(this.rows)
+      ]);
       this.restart();
       return true;
     }
   }
 
-  addRandomNumbers(count, rows) {
-    for (let i = 0; i < count; i++) {
-      let row = Game.getRandomPosition();
-      let col = Game.getRandomPosition();
-      // TODO: get random position from emtpy cells
-      let tries = 3;
-      while (rows[row][col] && tries) {
-        row = Game.getRandomPosition();
-        col = Game.getRandomPosition();
-        tries--;
-      }
-      if (rows[row][col]) return;
-      const n = Game.getRandomNumber();
-      Game.addNumberToPosition(n, row, col, this.moveCount, rows);
+  handleInput(key) {
+    if (!Game.isValidKey(key)) return;
+    this.moveCount++;
+    const [newRows, points] = Game.getNextState(this.rows, key, this.moveCount);
+    this.score += points;
+    // paintMatrix(this.rows, PRINT);
+    this.rows = newRows;
+    this.updateCells();
+    // let the game play indefinitely
+    // let terminate = this.checkWin();
+    // if (terminate) {
+    //   return;
+    // }
+    let terminate = this.checkLose();
+    if (terminate) {
+      return;
     }
+    paintMatrix(newRows, PRINT);
+    this.rows = newRows;
+    this.updateCells();
   }
 }

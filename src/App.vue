@@ -5,8 +5,25 @@
       by
       <a href="https://github.com/paradite/2048">@paradite</a>
     </div>
-    <GameBoard v-bind:game="game" v-bind:cells="cells" />
+    <div class="info-row">
+      <div class="info-box">
+        <div class="info-title">Move count</div>
+        <div class="info-content">{{ game.moveCount }}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-title">Score</div>
+        <div class="info-content">{{ game.score }}</div>
+      </div>
+    </div>
+    <GameBoard
+      v-bind:game="game"
+      v-bind:cells="cells"
+      v-bind:animation="animation"
+    />
     <div class="buttons">
+      <div class="button button-primary" v-on:click="handleSolve">
+        Once
+      </div>
       <div
         class="button button-primary"
         v-on:click="handleAuto"
@@ -18,13 +35,12 @@
         Restart
       </div>
     </div>
-    <div class="info">Move count: {{ game.moveCount }}</div>
     <div class="scores">
       High Scores
       <br />
-      <span v-if="game.scores.length === 0"> (empty)</span>
-      <div v-for="(score, i) in game.scores" :key="i" class="score">
-        [moves: {{ score[0] }}, max: {{ score[1] }}]
+      <span v-if="game.highScores.length === 0"> (empty)</span>
+      <div v-for="(score, i) in game.highScores" :key="i" class="score">
+        [score: {{ score[0] }}, moves: {{ score[1] }}, max: {{ score[2] }}]
       </div>
     </div>
   </div>
@@ -33,11 +49,13 @@
 <script>
 import GameBoard from './components/GameBoard.vue';
 import { Game } from './models/game';
-import { getAutoMoveMinFilledNSteps } from './solver';
-import { paintMatrix, keys } from './util';
+import { getAutoMoveMC, getAutoMoveRandom } from './solver';
+import { keys } from './util';
 
-const AUTO_INTERVAL = 50;
-const PRINT = false;
+const AUTO_INTERVAL = 0;
+// let AUTO_INTERVAL = 1000;
+
+let ANIMATION = true;
 
 export default {
   name: 'App',
@@ -102,7 +120,13 @@ export default {
   },
   data() {
     const game = new Game();
-    return { game, cells: game.cells, isAuto: false, autoInterval: null };
+    return {
+      game,
+      cells: game.cells,
+      isAuto: false,
+      autoInterval: null,
+      animation: ANIMATION
+    };
   },
   methods: {
     restart() {
@@ -111,45 +135,37 @@ export default {
     },
     handleAuto() {
       this.isAuto = !this.isAuto;
+
       if (this.autoInterval) {
         clearInterval(this.autoInterval);
       }
 
       if (this.isAuto) {
+        this.animation = false;
         this.autoSolve();
         this.autoInterval = setInterval(() => {
           this.autoSolve();
         }, AUTO_INTERVAL);
+      } else {
+        this.animation = true;
       }
+    },
+    handleSolve() {
+      this.autoSolve();
     },
     autoSolve() {
-      const move = getAutoMoveMinFilledNSteps(this.game.rows, 3);
+      let random = false;
+      let move;
+      if (random) {
+        move = getAutoMoveRandom();
+      } else {
+        // const move = getAutoMoveScoreNSteps(this.game.rows, 3);
+        move = getAutoMoveMC(this.game.rows, this.game.moveCount);
+      }
       this.cells = this.handleEvent(move);
     },
-    handleEvent(key, updated = {}, first = true) {
-      if (!Game.isValidKey(key)) return;
-      if (first) this.game.moveCount++;
-
-      const newRows = Game.getNextState(this.game.rows, key, updated);
-      // this.rows = newRows;
-      // we are done moving
-      Game.squeeze(newRows, key);
-      // paintMatrix(this.rows, PRINT);
-      this.game.rows = newRows;
-      this.game.updateCells();
-      let terminate = this.game.checkWin();
-      if (terminate) {
-        return;
-      }
-      terminate = this.game.checkLose();
-      if (terminate) {
-        return;
-      }
-      // add new numbers
-      this.game.addRandomNumbers(1, newRows);
-      paintMatrix(newRows, PRINT);
-      this.game.rows = newRows;
-      this.game.updateCells();
+    handleEvent(key) {
+      this.game.handleInput(key);
       return this.game.cells;
     }
   }
@@ -197,16 +213,29 @@ a {
   margin: 20px;
 }
 
-.info {
-  margin: 10px;
+.info-box {
+  width: 100px;
+  background: #8f7a66;
+  border-radius: 4px;
+  padding: 4px;
+  margin: 0 5px;
 }
 
-.buttons {
+.info-title {
+  color: rgb(238, 228, 218);
+}
+
+.info-content {
+  color: white;
+}
+
+.buttons,
+.info-row {
   display: flex;
   text-align: center;
   width: 370px;
   margin: 10px auto;
-  justify-content: space-around;
+  justify-content: center;
 }
 
 .button {

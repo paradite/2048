@@ -14,11 +14,13 @@
       v-bind:id="cell.id"
       v-bind:class="{
         [`cell-${cell.number}`]: true,
-        'fade-in': cell && cell.count === game.moveCount
+        'fade-in': animation && cell && cell.count === game.moveCount
       }"
       v-bind:style="{
         left: cellSize * cell.col + marginSize * (cell.col + 1) + 'px',
-        top: cellSize * cell.row + marginSize * (cell.row + 1) + 'px'
+        top: cellSize * cell.row + marginSize * (cell.row + 1) + 'px',
+
+        transition: animation ? 'all 0.1s' : ''
       }"
     >
       {{ cell.number }}
@@ -71,7 +73,8 @@ export default {
   props: {
     game: Game,
     cells: Array,
-    rows: Array
+    rows: Array,
+    animation: Boolean
   }
 };
 </script>
@@ -116,7 +119,6 @@ export default {
   justify-content: center;
   background-color: rgba(238, 228, 218, 0.35);
   border-radius: 2px;
-  transition: all 0.1s;
 }
 
 .cell-bg {
