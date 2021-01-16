@@ -1,10 +1,8 @@
 import cloneDeep from 'lodash.clonedeep';
-import { paintMatrix, keys } from '../util';
-import { getAutoMoveMinFilledNSteps } from '../solver';
+import { keys } from '../util';
 import { Cell } from './cell';
 
 const WIN_NUMBER = 2048;
-const PRINT = false;
 
 export class Game {
   static winNumber = WIN_NUMBER;
@@ -12,7 +10,6 @@ export class Game {
   constructor() {
     this.rows = [];
     this.cells = [];
-    this.restart();
     this.moved = {};
     this.moveCount = 0;
     this.scores = [];
@@ -387,37 +384,5 @@ export class Game {
       const n = Game.getRandomNumber();
       Game.addNumberToPosition(n, row, col, this.moveCount, rows);
     }
-  }
-
-  handleEvent(key, updated = {}, first = true) {
-    if (!Game.isValidKey(key)) return;
-    if (first) this.moveCount++;
-
-    const newRows = Game.getNextState(this.rows, key, updated);
-    // this.rows = newRows;
-    // we are done moving
-    Game.squeeze(newRows, key);
-    // paintMatrix(this.rows, PRINT);
-    this.rows = newRows;
-    this.updateCells();
-    let terminate = this.checkWin();
-    if (terminate) {
-      return;
-    }
-    terminate = this.checkLose();
-    if (terminate) {
-      return;
-    }
-    // add new numbers
-    this.addRandomNumbers(1, newRows);
-    paintMatrix(newRows, PRINT);
-    this.rows = newRows;
-    this.updateCells();
-    return this.cells;
-  }
-
-  autoSolve() {
-    const move = getAutoMoveMinFilledNSteps(this.rows, 3);
-    return this.handleEvent(move);
   }
 }

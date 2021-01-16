@@ -33,11 +33,11 @@
 <script>
 import GameBoard from './components/GameBoard.vue';
 import { Game } from './models/game';
-import { keys } from './util';
-
-const game = new Game();
+import { getAutoMoveMinFilledNSteps } from './solver';
+import { paintMatrix, keys } from './util';
 
 const AUTO_INTERVAL = 50;
+const PRINT = false;
 
 export default {
   name: 'App',
@@ -45,8 +45,10 @@ export default {
     GameBoard
   },
   mounted() {
+    this.game.restart();
+    this.cells = this.game.cells;
     window.onkeyup = e => {
-      this.cells = game.handleEvent(e.code);
+      this.cells = this.handleEvent(e.code);
     };
 
     // https://stackoverflow.com/a/23230280/1472186
@@ -82,15 +84,15 @@ export default {
       if (Math.abs(xDiff) > Math.abs(yDiff)) {
         /*most significant*/
         if (xDiff > 0) {
-          this.cells = game.handleEvent(keys.ArrowLeft);
+          this.cells = this.handleEvent(keys.ArrowLeft);
         } else {
-          this.cells = game.handleEvent(keys.ArrowRight);
+          this.cells = this.handleEvent(keys.ArrowRight);
         }
       } else {
         if (yDiff > 0) {
-          this.cells = game.handleEvent(keys.ArrowUp);
+          this.cells = this.handleEvent(keys.ArrowUp);
         } else {
-          this.cells = game.handleEvent(keys.ArrowDown);
+          this.cells = this.handleEvent(keys.ArrowDown);
         }
       }
       /* reset values */
@@ -99,24 +101,56 @@ export default {
     }
   },
   data() {
+    const game = new Game();
     return { game, cells: game.cells, isAuto: false, autoInterval: null };
   },
   methods: {
     restart() {
-      game.restart();
-      this.cells = game.cells;
+      this.game.restart();
+      this.cells = this.game.cells;
     },
     handleAuto() {
       this.isAuto = !this.isAuto;
       if (this.autoInterval) {
         clearInterval(this.autoInterval);
       }
+
       if (this.isAuto) {
-        this.cells = game.autoSolve();
+        this.autoSolve();
         this.autoInterval = setInterval(() => {
-          this.cells = game.autoSolve();
+          this.autoSolve();
         }, AUTO_INTERVAL);
       }
+    },
+    autoSolve() {
+      const move = getAutoMoveMinFilledNSteps(this.game.rows, 3);
+      this.cells = this.handleEvent(move);
+    },
+    handleEvent(key, updated = {}, first = true) {
+      if (!Game.isValidKey(key)) return;
+      if (first) this.game.moveCount++;
+
+      const newRows = Game.getNextState(this.game.rows, key, updated);
+      // this.rows = newRows;
+      // we are done moving
+      Game.squeeze(newRows, key);
+      // paintMatrix(this.rows, PRINT);
+      this.game.rows = newRows;
+      this.game.updateCells();
+      let terminate = this.game.checkWin();
+      if (terminate) {
+        return;
+      }
+      terminate = this.game.checkLose();
+      if (terminate) {
+        return;
+      }
+      // add new numbers
+      this.game.addRandomNumbers(1, newRows);
+      paintMatrix(newRows, PRINT);
+      this.game.rows = newRows;
+      this.game.updateCells();
+      return this.game.cells;
     }
   }
 };
