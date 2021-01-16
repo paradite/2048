@@ -32,7 +32,8 @@
 
 <script>
 import GameBoard from './components/GameBoard.vue';
-import { Game, keys } from './game';
+import { Game } from './models/game';
+import { keys } from './util';
 
 const game = new Game();
 
@@ -102,7 +103,8 @@ export default {
   },
   methods: {
     restart() {
-      this.cells = game.restart();
+      game.restart();
+      this.cells = game.cells;
     },
     handleAuto() {
       this.isAuto = !this.isAuto;

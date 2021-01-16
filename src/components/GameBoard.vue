@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import { Game } from '../game';
+import { Game } from '../models/game';
 export default {
   name: 'GameBoard',
   data() {

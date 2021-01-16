@@ -1,3 +1,17 @@
+export const keys = {
+  ArrowLeft: 'ArrowLeft',
+  ArrowRight: 'ArrowRight',
+  ArrowUp: 'ArrowUp',
+  ArrowDown: 'ArrowDown'
+};
+
+export const ALL_MOVES = [
+  keys.ArrowLeft,
+  keys.ArrowRight,
+  keys.ArrowUp,
+  keys.ArrowDown
+];
+
 export const isObjEmpty = obj => {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 };
